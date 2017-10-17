@@ -1,0 +1,399 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- Angular Material style sheet -->
+    <link rel="stylesheet" href="./Content/Styles/angular-material.min.css">
+	
+	<script type="text/javascript" src="./Content/Scripts/webfont.js"></script>
+	<script>
+	  WebFont.load({
+		custom: {
+		  families: ['Kanji Epkyouka']
+		}
+	  });
+	</script>
+
+    <script type="text/javascript" src="./Content/Scripts/lessons.js"></script>
+    <script type="text/javascript" src="./Content/Scripts/lodash.js"></script>
+    <!-- Angular Material requires Angular.js Libraries -->
+    <script type="text/javascript" src="./Content/Scripts/angular.min.js"></script>
+    <script type="text/javascript" src="./Content/Scripts/angular-animate.min.js"></script>
+    <script type="text/javascript" src="./Content/Scripts/angular-aria.min.js"></script>
+    <script type="text/javascript" src="./Content/Scripts/angular-messages.min.js"></script>
+
+    <!-- Angular Material Library -->
+    <script type="text/javascript" src="./Content/Scripts/angular-material.min.js"></script>
+
+    <!-- Your application bootstrap  -->
+    <script type="text/javascript">
+        var startClicked = function ($scope) {
+            $scope.questionList = _.flatMap($scope.selected, function (x) { return x.questions; });
+            $scope.questionList = _.shuffle($scope.questionList);
+            if ($scope.selected.length > 0) {
+                $scope.nextDisabled = false;
+            }
+            $scope.questionPoolSize = $scope.questionList.length;
+            $scope.nextClicked($scope);
+        };
+
+        function init($scope) {
+            $scope.pageOneActive = true;
+            $scope.pageTwoActive = false;
+            $scope.soundActive = true;
+            $scope.soundStatus = 'volume_up';
+            $scope.correct = null;
+            $scope.isDisabled = false;
+            $scope.nextDisabled = true;
+            $scope.startDisabled = true;
+            $scope.questionPoolSize = 0;
+            $scope.questionsAnswered = 0;
+            $scope.bGImages = ['imageCycle1', 'imageCycle2', 'imageCycle3', 'imageCycle4'];
+            $scope.Math = Math;
+            $scope.radioStyle = function (answer) {
+                if ($scope.data.group1 == undefined) {
+                    return 'md-accent';
+                }
+                if ($scope.correctAnswer === answer) {
+                    return 'md-accent';
+                }
+                return 'md-primary';
+            }
+            $scope.radioTextStyle = function (answer) {
+                if ($scope.data.group1 == undefined) {
+                    return { color: 'black' };
+                }
+                if ($scope.correctAnswer === answer) {
+                    return { color: 'red' };
+                }
+                return { color: 'blue' };
+            }
+            $scope.nextClicked = function () {
+                if ($scope.questionList.length === 0) {
+                    $scope.goHome();
+                    return;
+                }
+
+                $scope.nextDisabled = true;
+                $scope.data = { group1: null };
+                $scope.correct = null;
+                var whichSound = $scope.randomNumber(0, 2);
+                if ($scope.soundActive == true) {
+                    if (whichSound == 0) {
+						document.getElementById('clickOne').play();
+                    } else {
+						document.getElementById('clickTwo').play();
+					}
+				}	
+                $scope.questionText = $scope.questionList[0].text;
+                $scope.correctAnswer = $scope.questionList[0].answers[0];
+                $scope.answers = _.shuffle($scope.questionList[0].answers);
+                _.pull($scope.questionList, $scope.questionList[0]);
+                $scope.isDisabled = false;
+                if ($scope.questionList.length == 0) {
+                    $scope.nextDisabled = true;
+                }
+                $scope.questionsAnswered++;
+            };
+            $scope.radioClicked = function () {
+                if ($scope.correctAnswer == $scope.data.group1) {
+                    $scope.correct = true;
+                    if ($scope.soundActive == true) {
+                        document.getElementById('bell').play();
+                    }
+                } else {
+                    $scope.correct = false;
+                    if ($scope.soundActive == true) {
+                        document.getElementById('buzzer').play();
+                    }
+                }
+                $scope.isDisabled = true;
+                $scope.nextDisabled = false;
+            };
+            $scope.randomNumber = function (min, max) {
+                return Math.floor(Math.random() * (max - min)) + min;
+            }
+            $scope.selectedBG = $scope.bGImages[$scope.randomNumber(0, $scope.bGImages.length)];
+            $scope.selected = [];
+            $scope.toggle = function (item, list) {
+                var idx = list.indexOf(item);
+                if (idx > -1) {
+                    list.splice(idx, 1);
+                }
+                else {
+                    list.push(item);
+                }
+                if ($scope.isIndeterminate()) {
+                    $scope.startDisabled = false;
+                } else if ($scope.isIndeterminate() == false && $scope.allChecked() != true) {
+                    $scope.startDisabled = true;
+                }
+
+            };
+            $scope.exists = function (item, list) {
+                return list.indexOf(item) > -1;
+            };
+            $scope.isIndeterminate = function () {
+                return ($scope.selected.length !== 0 &&
+                    $scope.selected.length !== $scope.items.length);
+            };
+            $scope.allChecked = function () {
+                return $scope.selected.length === $scope.items.length;
+            };
+            $scope.toggleAll = function () {
+                if ($scope.selected.length === $scope.items.length) {
+                    $scope.selected = [];
+                    $scope.startDisabled = true;
+                } else if ($scope.selected.length === 0 || $scope.selected.length > 0) {
+                    $scope.selected = $scope.items.slice(0);
+                    $scope.startDisabled = false;
+                }
+            };
+            $scope.goHome = function () {
+                $scope.pageOneActive = true;
+                $scope.pageTwoActive = false;
+                $scope.selected = [];
+                $scope.startDisabled = true;
+                $scope.questionsAnswered = 0;
+            }
+            $scope.toggleSound = function () {
+                if ($scope.soundActive == true) {
+                    $scope.soundActive = false;
+                    $scope.soundStatus = 'volume_off';
+                }
+                else {
+                    $scope.soundActive = true;
+                    $scope.soundStatus = 'volume_up';
+                }
+            }
+            $scope.startButton = function () {
+                $scope.pageOneActive = false;
+                $scope.pageTwoActive = true;
+                startClicked($scope);
+            }
+        };
+        /**
+         * You must include the dependency on 'ngMaterial'
+         */
+        angular.module('basicJapaneseKanji', ['ngMaterial'])
+        .controller('AppCtrl', ['$scope', '$window', function ($scope, $window) {
+            $scope.items = getLessonData();
+            init($scope);
+        }]);
+    </script>
+    <style>
+        @font-face {
+           font-family: 'Kanji Epkyouka';
+            src: url('./Content/Fonts/epkyouka.eot'); /* IE9 Compat Modes */
+            src: url('./Content/Fonts/epkyouka.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
+            url('./Content/Fonts/epkyouka.woff2') format('woff2'), /* Modern Browsers */
+            url('./Content/Fonts/epkyouka.woff') format('woff'), /* Modern Browsers */
+            url('./Content/Fonts/epkyouka.ttf') format('truetype'), /* Safari, Android, iOS */
+            url('./Content/Fonts/epkyouka.svg') format('svg'); /* Legacy iOS */
+            font-weight: normal;
+            font-style: normal;
+        }
+        
+        html {
+            background: transparent;
+        } 
+        
+
+        h1 {
+            font-size: 64px;
+        }
+
+        .checkbox div.flex-xs {
+            min-height: 40px; 
+            clear: both;
+        }
+
+        .md-flex {
+            flex-grow: 4;
+        }
+
+        .md-flex2 {
+            flex-grow: 1;
+        }
+
+        .imageCycle1 {
+            background: url("./Content/Images/Background/Origami Kimono_L2.jpg");
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-attachment: fixed;
+        }
+
+        .imageCycle2 {
+            background: url("./Content/Images/Background/Origami Kimono_L3.jpg");
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-attachment: fixed;
+        }
+
+        .imageCycle3 {
+            background: url("./Content/Images/Background/Origami Kimono_L7.jpg");
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-attachment: fixed;
+        }
+
+        .imageCycle4 {
+            background: url("./Content/Images/Background/Origami Kimono_L8.jpg");
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-attachment: fixed;
+        }
+
+        /*------Container------*/
+        div#container {
+            max-width: 960px;
+            min-width: 320px;
+            margin: 0 auto;
+            border: #222;
+            background-color: white;
+            box-shadow: 0px 0px 10px rgba(0,0,0,.9);
+        }
+        /*------radioButtons------*/
+        div#radioButtons {
+            display: inline-block;
+            width: auto;
+            text-align: left;
+            margin-right: 4%;
+        }
+
+        div#correctImage {
+            display: inline-block;
+            width: auto;
+        }
+        /*------nextButton------*/
+        div#nextButton {
+            clear: both;
+        }
+        /*------pageTwo------*/
+        div#pageTwo {
+            margin: auto;
+            text-align: center;
+        }
+
+        div#pageOne {
+            margin: auto;
+            text-align: center;
+        }
+
+        .leftAlign {
+            text-align: left;
+            margin-left: 9%;
+        }
+		
+		div#fontLoader {
+			font-size: 8pt;
+		}
+		
+		.kanjiFont {
+		}
+		
+		.tuttleImage {
+			vertical-align: text-bottom;
+		}
+    </style>
+
+    <title>Basic Japanese Kanji</title>
+</head>
+<body ng-app="basicJapaneseKanji" ng-controller="AppCtrl" class="{{selectedBG}}" ng-cloak>
+    <div ng-cloak id="container">
+        <audio id="clickOne">
+			<source src="./Content/Sounds/click01.wav">
+			<source src="./Content/Sounds/click01.mp3">
+		</audio>
+		<audio id="clickTwo">
+			<source src="./Content/Sounds/click02.wav">
+			<source src="./Content/Sounds/click02.mp3">
+		</audio>
+		<audio id="buzzer">
+			<source src="./Content/Sounds/buzzer.wav">
+			<source src="./Content/Sounds/buzzer.mp3">
+		</audio>
+		<audio id="bell">
+			<source src="./Content/Sounds/bell.wav">
+			<source src="./Content/Sounds/bell.mp3">
+		</audio>
+        <md-toolbar class="">
+            <div layout="row" class="md-toolbar-tools">
+                <h1 class="md-flex">Japanese Kanji for Beginners</h1>
+                <section class="md-flex2" layout="row" layout-align="start center">
+                    <md-button ng-click="goHome()">Home</md-button>
+                    <md-button ng-click="toggleSound()" class="md-icon-button" aria-label="Volume_Up">
+                        <img src="./Content/Images/{{soundStatus}}.png" />
+                    </md-button>
+                </section>
+            </div>
+        </md-toolbar>
+        <div id="pageOne" ng-if="pageOneActive">
+            <md-content flex layout-padding>
+                <div>
+                    <div layout="row" layout-wrap>
+                        <div flex="100" layout="column">
+                            <div>
+                                <fieldset class="checkbox" width="90%">
+                                    <legend class=""><h2>Vocabulary</h2></legend>
+                                    <div class="leftAlign" layout="row" layout-wrap flex>
+                                        <div flex-xs flex="100">
+                                            <md-checkbox aria-label="Select All"
+                                                         ng-checked="allChecked()"
+                                                         md-indeterminate="isIndeterminate()"
+                                                         ng-click="toggleAll()">
+                                                <span ng-if="allChecked()">De-</span>Select All
+                                            </md-checkbox>
+                                        </div>
+                                        <div flex="50" ng-repeat="item in items">
+                                            <md-checkbox ng-checked="exists(item, selected)" ng-click="toggle(item, selected)">
+                                                {{ item.title }}
+                                            </md-checkbox>
+                                        </div>
+                                    </div>
+                                    <md-button class="md-raised md-primary" ng-disabled="startDisabled" ng-click="startButton()">Start</md-button>
+                                </fieldset>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+				</md-content>
+        </div>
+        <div id="pageTwo" ng-if="pageTwoActive">
+            <md-content flex layout-padding>
+                <div>
+                    <div layout="row" layout-wrap>
+                        <div flex="100" layout="column">
+                            <div>
+                                <fieldset width="90%">
+                                    <legend class=""><h2>Vocabulary</h2></legend>
+                                    <h1 id="kanjiFont" style="font-family:'Kanji Epkyouka';">{{questionText}}</h1>
+                                    <div id="radioButtons">
+                                        <md-radio-group ng-model="data.group1" ng-change="radioClicked()">
+                                            <md-radio-button class="{{radioStyle(answer)}}" ng-style="radioTextStyle(answer)" ng-disabled="isDisabled" ng-repeat="answer in answers" value="{{answer}}">{{answer}}</md-radio-button>
+                                        </md-radio-group>
+                                    </div>
+                                    <div id="correctImage">
+                                        <img ng-if="correct===true" src="./Content/Images/Correct.png">
+                                        <img ng-if="correct===false" src="./Content/Images/Incorrect.png">
+                                    </div>
+                                    <div id="nextButton">
+                                        <md-button class="md-raised md-primary" ng-disabled="nextDisabled" ng-click="nextClicked()">Next</md-button>
+                                        <h3>Question {{questionsAnswered}} of {{questionPoolSize}}</h3>
+                                    </div>
+                                </fieldset>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+				</md-content>
+        </div>
+        <footer>
+            <div id="tuttleImage" align="center"><a href="http://www.tuttlepublishing.com"><img src="./Content/Images/Tuttle.png" /></a></div>
+			<div id="fontLoader" style="font-family:'Kanji Epkyouka';" align="center">&copy; 2016</div>
+		</footer>
+    </div>
+</body>
+</html>
